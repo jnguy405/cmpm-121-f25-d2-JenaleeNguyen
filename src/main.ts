@@ -1,6 +1,9 @@
-import exampleIconUrl from "./noun-paperclip-7598668-00449F.png";
 import "./style.css";
 
+// Create the HTML structure
 document.body.innerHTML = `
-  <p>Example image asset: <img src="${exampleIconUrl}" class="icon" /></p>
+<div id="container">
+  <h1 id="title">Waatio</h1>
+  <canvas id="canvas"></canvas>
+</div>
 `;
