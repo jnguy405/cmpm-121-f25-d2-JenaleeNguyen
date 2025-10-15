@@ -5,7 +5,11 @@ document.body.innerHTML = `
 <div id="container">
   <h1 id="title">Waat.io</h1>
   <canvas id="canvas" width="256" height="256"></canvas>
-  <button id="clear">Clear</button>
+  <div id="buttons">
+    <button id="clear">Clear</button>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+  </div>
 </div>
 `;
 
@@ -24,6 +28,9 @@ if (!canvas || !context) throw new Error("Canvas or context not found");
 const strokes: { x: number; y: number }[][] = [];
 let currentStroke: { x: number; y: number }[] | null = null;
 
+// Store undone strokes for redo functionality
+const undoneStrokes: { x: number; y: number }[][] = [];
+
 // Track cursor state
 const cursor = { drawing: false, x: 0, y: 0 };
 
@@ -36,6 +43,9 @@ canvas.addEventListener("mousedown", (e: MouseEvent) => {
 
   currentStroke = [{ x: cursor.x, y: cursor.y }];
   strokes.push(currentStroke);
+
+  // Once we start a new stroke, clear the redo stack
+  undoneStrokes.length = 0;
 
   // Notify that drawing has changed
   canvas.dispatchEvent(new Event("drawing-changed"));
@@ -65,7 +75,30 @@ globalThis.addEventListener("mouseup", () => {
 document.getElementById("clear")?.addEventListener("click", () => {
   context.clearRect(0, 0, canvas.width, canvas.height);
   strokes.length = 0; // remove all strokes
+  undoneStrokes.length = 0; // clear redo stack
   canvas.dispatchEvent(new Event("drawing-changed"));
+});
+
+// Undo button
+document.getElementById("undo")?.addEventListener("click", () => {
+  if (strokes.length > 0) {
+    const undone = strokes.pop(); // remove last stroke (pop most recent element)
+    if (undone) {
+      undoneStrokes.push(undone); // add to redo stack
+      canvas.dispatchEvent(new Event("drawing-changed"));
+    }
+  }
+});
+
+// Redo button
+document.getElementById("redo")?.addEventListener("click", () => {
+  if (undoneStrokes.length > 0) {
+    const redone = undoneStrokes.pop(); // remove last undone stroke
+    if (redone) {
+      strokes.push(redone); // add back to strokes
+      canvas.dispatchEvent(new Event("drawing-changed"));
+    }
+  }
 });
 
 // Redraw everything from the strokes list
