@@ -20,7 +20,7 @@ document.body.innerHTML = `
 
 let currentLineWidth = 2; // default to "thin"
 
-// Get canvas and context
+// Get canvas and context ===
 const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
 if (canvas) {
   canvas.width = 256;
@@ -74,13 +74,42 @@ function MarkerLine(
   return { display, drag };
 }
 
+// Tool preview implementation ===
+// Factory function that creates a circular preview marker for the current tool
+function MarkerPreview(
+  x: number,
+  y: number,
+  lineWidth: number,
+): DisplayCmd {
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.fillStyle = "rgba(0, 0, 0, 1)"; // filled circle
+      ctx.arc(x, y, lineWidth / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    },
+  };
+}
+
 // Store all drawing commands ===
 const commands: DisplayCmd[] = [];
 let currentCmd: ReturnType<typeof MarkerLine> | null = null;
 const undoneCmd: DisplayCmd[] = [];
+let toolPreview: DisplayCmd | null = null; // holds the live preview for the tool
 
-// Track cursor state
-const cursor = { drawing: false, x: 0, y: 0 };
+// Track cursor state ===
+const inputState = { isDrawing: false };
+
+// Observers for drawing and tool movement events ===
+canvas.addEventListener("drawing-changed", () => {
+  redraw(context);
+});
+
+canvas.addEventListener("tool-moved", () => {
+  redraw(context);
+});
 
 // Tool button event listeners ===
 // thin tool selected by default (2px)
@@ -99,37 +128,37 @@ thickBtn?.addEventListener("click", () => {
 
 // Mouse event listeners ===
 // Start drawing
-canvas.addEventListener("mousedown", (e: MouseEvent) => {
+canvas.addEventListener("mousedown", (e) => {
   if (e.button !== 0) return;
-  cursor.drawing = true;
-  cursor.x = e.offsetX;
-  cursor.y = e.offsetY;
-
-  // Create a new MarkerLine and start tracking it
-  currentCmd = MarkerLine(cursor.x, cursor.y, currentLineWidth);
+  inputState.isDrawing = true;
+  currentCmd = MarkerLine(e.offsetX, e.offsetY, currentLineWidth);
   commands.push(currentCmd);
-
-  // Once we start a new stroke, clear the redo stack
   undoneCmd.length = 0;
-
-  // Notify that drawing has changed
+  toolPreview = null;
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Draw while moving
-canvas.addEventListener("mousemove", (e: MouseEvent) => {
-  if (!cursor.drawing || !currentCmd) return;
+// Mouse move updates the preview
+canvas.addEventListener("mousemove", (e) => {
+  if (!inputState.isDrawing) {
+    toolPreview = MarkerPreview(e.offsetX, e.offsetY, currentLineWidth);
+    canvas.dispatchEvent(new Event("tool-moved"));
+  } else if (currentCmd) {
+    currentCmd.drag(e.offsetX, e.offsetY);
+    canvas.dispatchEvent(new Event("drawing-changed"));
+  }
+});
 
-  // Add new point to the current line as the mouse moves
-  currentCmd.drag(e.offsetX, e.offsetY);
-  cursor.x = e.offsetX;
-  cursor.y = e.offsetY;
-  canvas.dispatchEvent(new Event("drawing-changed"));
+// Hide preview when cursor leaves the canvas
+canvas.addEventListener("mouseleave", () => {
+  toolPreview = null;
+  canvas.dispatchEvent(new Event("tool-moved"));
 });
 
 // Stop drawing
 globalThis.addEventListener("mouseup", () => {
-  cursor.drawing = false;
+  inputState.isDrawing = false;
   currentCmd = null;
 });
 
@@ -169,12 +198,14 @@ document.getElementById("redo")?.addEventListener("click", () => {
 function redraw(ctx: CanvasRenderingContext2D) {
   if (!canvas) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw all stored commands
   for (const cmd of commands) {
     cmd.display(ctx);
   }
-}
 
-// Observer for "drawing-changed" event
-canvas.addEventListener("drawing-changed", () => {
-  redraw(context);
-});
+  // Draw tool preview (only when not drawing)
+  if (!inputState.isDrawing && toolPreview) {
+    toolPreview.display(ctx);
+  }
+}
