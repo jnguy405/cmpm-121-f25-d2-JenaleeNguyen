@@ -1,11 +1,16 @@
 import "./style.css";
 
-// Create the HTML structure
+// Create the HTML structure ===
+// Individual Button IDs are kept for independent styling
 document.body.innerHTML = `
 <div id="container">
   <h1 id="title">Waat.io</h1>
+  <div id="markers">
+    <button id="thin">Thin</button>
+    <button id="thick">Thick</button>
+  </div>
   <canvas id="canvas" width="256" height="256"></canvas>
-  <div id="buttons">
+  <div id="actions">
     <button id="clear">Clear</button>
     <button id="undo">Undo</button>
     <button id="redo">Redo</button>
@@ -13,78 +18,128 @@ document.body.innerHTML = `
 </div>
 `;
 
+let currentLineWidth = 2; // default to "thin"
+
 // Get canvas and context
 const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
 if (canvas) {
   canvas.width = 256;
   canvas.height = 256;
 }
+
+const thinBtn = document.getElementById("thin");
+const thickBtn = document.getElementById("thick");
 const context = canvas?.getContext("2d");
 
-// Null checks for TypeScript
 if (!canvas || !context) throw new Error("Canvas or context not found");
 
-// Store all strokes (each stroke is an array of points)
-const strokes: { x: number; y: number }[][] = [];
-let currentStroke: { x: number; y: number }[] | null = null;
+// Data models and interfaces ===
+// Defines the contract for any drawing command that knows how to render itself
+interface DisplayCmd {
+  display(ctx: CanvasRenderingContext2D): void;
+}
 
-// Store undone strokes for redo functionality
-const undoneStrokes: { x: number; y: number }[][] = [];
+// Drawing command implementations ===
+// Factory function that creates a line command with both drawing and dragging behavior
+function MarkerLine(
+  x: number,
+  y: number,
+  lineWidth: number,
+): DisplayCmd & { drag(x: number, y: number): void } {
+  const points: { x: number; y: number }[] = [{ x, y }];
+
+  function drag(x: number, y: number): void {
+    points.push({ x, y });
+  }
+
+  function display(ctx: CanvasRenderingContext2D): void {
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = "black";
+    if (points.length < 2) return;
+
+    const first = points[0];
+    if (!first) return;
+
+    ctx.beginPath();
+    ctx.moveTo(first.x, first.y);
+
+    for (const point of points.slice(1)) {
+      ctx.lineTo(point.x, point.y);
+    }
+
+    ctx.stroke();
+  }
+
+  return { display, drag };
+}
+
+// Store all drawing commands ===
+const commands: DisplayCmd[] = [];
+let currentCmd: ReturnType<typeof MarkerLine> | null = null;
+const undoneCmd: DisplayCmd[] = [];
 
 // Track cursor state
 const cursor = { drawing: false, x: 0, y: 0 };
 
+// Tool button event listeners ===
+// thin tool selected by default (2px)
+thinBtn?.addEventListener("click", () => {
+  currentLineWidth = 2;
+  thinBtn.classList.add("selectedTool");
+  thickBtn?.classList.remove("selectedTool");
+});
+
+// thick tool (6px)
+thickBtn?.addEventListener("click", () => {
+  currentLineWidth = 6;
+  thickBtn.classList.add("selectedTool");
+  thinBtn?.classList.remove("selectedTool");
+});
+
+// Mouse event listeners ===
 // Start drawing
 canvas.addEventListener("mousedown", (e: MouseEvent) => {
-  if (e.button !== 0) return; // Only respond to left mouse button
+  if (e.button !== 0) return;
   cursor.drawing = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 
-  currentStroke = [{ x: cursor.x, y: cursor.y }];
-  strokes.push(currentStroke);
-
-  // Once we start a new stroke, clear the redo stack
-  undoneStrokes.length = 0;
-
-  // Notify that drawing has changed
+  currentCmd = MarkerLine(cursor.x, cursor.y, currentLineWidth);
+  commands.push(currentCmd);
+  undoneCmd.length = 0;
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Draw while moving
 canvas.addEventListener("mousemove", (e: MouseEvent) => {
-  if (!cursor.drawing || !currentStroke) return; // null check
-
-  // Save the new point to the current stroke
-  const point = { x: e.offsetX, y: e.offsetY };
-  currentStroke.push(point);
+  if (!cursor.drawing || !currentCmd) return;
+  currentCmd.drag(e.offsetX, e.offsetY);
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
-
-  // Notify that drawing has changed
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Stop drawing
 globalThis.addEventListener("mouseup", () => {
   cursor.drawing = false;
-  currentStroke = null;
+  currentCmd = null;
 });
 
+// Button event listeners ===
 // Clear button
 document.getElementById("clear")?.addEventListener("click", () => {
   context.clearRect(0, 0, canvas.width, canvas.height);
-  strokes.length = 0; // remove all strokes
-  undoneStrokes.length = 0; // clear redo stack
+  commands.length = 0;
+  undoneCmd.length = 0;
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
 // Undo button
 document.getElementById("undo")?.addEventListener("click", () => {
-  if (strokes.length > 0) {
-    const undone = strokes.pop(); // remove last stroke (pop most recent element)
+  if (commands.length > 0) {
+    const undone = commands.pop();
     if (undone) {
-      undoneStrokes.push(undone); // add to redo stack
+      undoneCmd.push(undone);
       canvas.dispatchEvent(new Event("drawing-changed"));
     }
   }
@@ -92,41 +147,26 @@ document.getElementById("undo")?.addEventListener("click", () => {
 
 // Redo button
 document.getElementById("redo")?.addEventListener("click", () => {
-  if (undoneStrokes.length > 0) {
-    const redone = undoneStrokes.pop(); // remove last undone stroke
+  if (undoneCmd.length > 0) {
+    const redone = undoneCmd.pop();
     if (redone) {
-      strokes.push(redone); // add back to strokes
+      commands.push(redone);
       canvas.dispatchEvent(new Event("drawing-changed"));
     }
   }
 });
 
-// Redraw everything from the strokes list
+// Rendering logic ===
+// Redraw function
 function redraw(ctx: CanvasRenderingContext2D) {
-  if (!canvas) return; // null check
-
-  // Clear the canvas
+  if (!canvas) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "black";
-
-  for (const stroke of strokes) {
-    if (stroke.length < 2 || !stroke[0]) continue; // null check
-
-    // Draw the stroke
-    ctx.beginPath();
-    ctx.moveTo(stroke[0].x, stroke[0].y);
-    for (let i = 1; i < stroke.length; i++) {
-      const point = stroke[i];
-      if (point) {
-        ctx.lineTo(point.x, point.y);
-      }
-    }
-    ctx.stroke();
+  for (const cmd of commands) {
+    cmd.display(ctx);
   }
 }
 
-// Observer for "drawing-changed" event — only redraw when needed
+// Observer for "drawing-changed" event
 canvas.addEventListener("drawing-changed", () => {
   redraw(context);
 });
