@@ -1,8 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap");
 
-/* NOTE: Styles cannot reference classes, they are all by ID */
-
-/* Title and Canvas Styles */
+/* Container */
 #container {
   display: flex;
   flex-direction: column;
@@ -11,58 +9,66 @@
   height: 80vh;
 }
 
+/* Title */
 #title {
   font-size: 48px;
   font-family:
     "Baloo 2", "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
   text-align: center;
+  margin-bottom: 10px; /* Bring title closer to markers */
 }
 
+/* Markers Section */
+#markers {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* All Buttons share the same style */
+#thin,
+#thick,
+#clear,
+#undo,
+#redo {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  border: 2px solid black;
+  transition: transform 0.1s ease;
+}
+
+/* Hover effect for all buttons */
+#thin:hover,
+#thick:hover,
+#clear:hover,
+#undo:hover,
+#redo:hover {
+  transform: scale(1.05);
+}
+
+/* Canvas */
 #canvas {
   border: 1px solid black;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   width: 256px;
   height: 256px;
   border-radius: 40px;
   box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Button Styles */
-
-/* Clear Button */
-#clear {
+/* Bottom Buttons Container */
+#actions {
   margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
-  border-radius: 5px;
-  background: white;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
 }
 
-/* Undo Button */
-#undo {
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
-  border-radius: 5px;
-  background: white;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-}
-
-/* Redo Button */
-#redo {
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
-  border-radius: 5px;
-  background: white;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
+#markers button.selectedTool {
+  background-color: #222;
+  color: white;
+  border: 2px solid #555;
 }
