@@ -25,12 +25,15 @@
   margin-bottom: 15px;
 }
 
-/* All Buttons share the same style */
-#thin,
-#thick,
-#clear,
-#undo,
-#redo {
+/* Stickers Section */
+#stickers {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* All buttons share the same style */
+button {
   padding: 10px 20px;
   font-size: 16px;
   font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
@@ -43,11 +46,7 @@
 }
 
 /* Hover effect for all buttons */
-#thin:hover,
-#thick:hover,
-#clear:hover,
-#undo:hover,
-#redo:hover {
+button:hover {
   transform: scale(1.05);
 }
 
@@ -67,7 +66,8 @@
   margin-top: 20px;
 }
 
-#markers button.selectedTool {
+/* Selected tool styling for markers and stickers */
+button.selectedTool {
   background-color: #222;
   color: white;
   border: 2px solid #555;

@@ -18,7 +18,21 @@ document.body.innerHTML = `
 </div>
 `;
 
+// Sticker buttons
+const stickerButtonsHTML = `
+<div id="stickers">
+  <button data-sticker="☕">☕</button>
+  <button data-sticker="🍪">🍪</button>
+  <button data-sticker="🍩">🍩</button>
+</div>
+`;
+
+// Insert stickers directly under the markers
+const markersDiv = document.getElementById("markers");
+markersDiv?.insertAdjacentHTML("afterend", stickerButtonsHTML);
+
 let currentLineWidth = 2; // default to "thin"
+let currentSticker: string | null = null;
 
 // Get canvas and context ===
 const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
@@ -93,6 +107,44 @@ function MarkerPreview(
   };
 }
 
+// Sticker preview command
+function StickerPreview(x: number, y: number, sticker: string): DisplayCmd {
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.save();
+      ctx.font = "32px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(sticker, x, y);
+      ctx.restore();
+    },
+  };
+}
+
+// Sticker placement command
+function StickerCmd(
+  x: number,
+  y: number,
+  sticker: string,
+): DisplayCmd & { drag(x: number, y: number): void } {
+  let pos = { x, y };
+
+  function drag(newX: number, newY: number) {
+    pos = { x: newX, y: newY };
+  }
+
+  function display(ctx: CanvasRenderingContext2D) {
+    ctx.save();
+    ctx.font = "32px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(sticker, pos.x, pos.y);
+    ctx.restore();
+  }
+
+  return { display, drag };
+}
+
 // Store all drawing commands ===
 const commands: DisplayCmd[] = [];
 let currentCmd: ReturnType<typeof MarkerLine> | null = null;
@@ -102,21 +154,18 @@ let toolPreview: DisplayCmd | null = null; // holds the live preview for the too
 // Track cursor state ===
 const inputState = { isDrawing: false };
 
-// Observers for drawing and tool movement events ===
-canvas.addEventListener("drawing-changed", () => {
-  redraw(context);
-});
-
-canvas.addEventListener("tool-moved", () => {
-  redraw(context);
-});
-
 // Tool button event listeners ===
 // thin tool selected by default (2px)
 thinBtn?.addEventListener("click", () => {
   currentLineWidth = 2;
   thinBtn.classList.add("selectedTool");
   thickBtn?.classList.remove("selectedTool");
+  currentSticker = null; // deselect sticker
+
+  // 🔹 Deselect all sticker buttons when switching to marker tool
+  document.querySelectorAll("#stickers button").forEach((b) =>
+    b.classList.remove("selectedTool")
+  );
 });
 
 // thick tool (6px)
@@ -124,12 +173,52 @@ thickBtn?.addEventListener("click", () => {
   currentLineWidth = 6;
   thickBtn.classList.add("selectedTool");
   thinBtn?.classList.remove("selectedTool");
+  currentSticker = null; // deselect sticker
+
+  // 🔹 Deselect all sticker buttons when switching to marker tool
+  document.querySelectorAll("#stickers button").forEach((b) =>
+    b.classList.remove("selectedTool")
+  );
+});
+
+// Sticker button event listeners
+const stickerButtons = document.querySelectorAll<HTMLButtonElement>(
+  "#stickers button",
+);
+
+stickerButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentSticker = btn.dataset.sticker || null;
+
+    // Update selected styling
+    stickerButtons.forEach((b) => b.classList.remove("selectedTool"));
+    btn.classList.add("selectedTool");
+
+    // 🔹 Deselect thin/thick marker buttons when a sticker is chosen
+    thinBtn?.classList.remove("selectedTool");
+    thickBtn?.classList.remove("selectedTool");
+
+    // Fire tool-moved event to redraw preview
+    canvas.dispatchEvent(new Event("tool-moved"));
+  });
 });
 
 // Mouse event listeners ===
-// Start drawing
+// Start drawing / place sticker
 canvas.addEventListener("mousedown", (e) => {
   if (e.button !== 0) return;
+
+  // Sticker placement
+  if (currentSticker) {
+    const stickerCommand = StickerCmd(e.offsetX, e.offsetY, currentSticker);
+    commands.push(stickerCommand);
+    undoneCmd.length = 0;
+    toolPreview = null;
+    canvas.dispatchEvent(new Event("drawing-changed"));
+    return;
+  }
+
+  // Marker drawing
   inputState.isDrawing = true;
   currentCmd = MarkerLine(e.offsetX, e.offsetY, currentLineWidth);
   commands.push(currentCmd);
@@ -139,10 +228,14 @@ canvas.addEventListener("mousedown", (e) => {
 });
 
 // Draw while moving
-// Mouse move updates the preview
 canvas.addEventListener("mousemove", (e) => {
   if (!inputState.isDrawing) {
-    toolPreview = MarkerPreview(e.offsetX, e.offsetY, currentLineWidth);
+    // Sticker preview
+    if (currentSticker) {
+      toolPreview = StickerPreview(e.offsetX, e.offsetY, currentSticker);
+    } else {
+      toolPreview = MarkerPreview(e.offsetX, e.offsetY, currentLineWidth);
+    }
     canvas.dispatchEvent(new Event("tool-moved"));
   } else if (currentCmd) {
     currentCmd.drag(e.offsetX, e.offsetY);
@@ -209,3 +302,12 @@ function redraw(ctx: CanvasRenderingContext2D) {
     toolPreview.display(ctx);
   }
 }
+
+// Observers for drawing and tool movement events ===
+canvas.addEventListener("drawing-changed", () => {
+  redraw(context);
+});
+
+canvas.addEventListener("tool-moved", () => {
+  redraw(context);
+});
