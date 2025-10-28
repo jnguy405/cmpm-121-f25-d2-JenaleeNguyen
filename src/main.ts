@@ -18,18 +18,65 @@ document.body.innerHTML = `
 </div>
 `;
 
-// Sticker buttons
-const stickerButtonsHTML = `
-<div id="stickers">
-  <button data-sticker="☕">☕</button>
-  <button data-sticker="🍪">🍪</button>
-  <button data-sticker="🍩">🍩</button>
-</div>
-`;
+// === Step 9: Custom stickers (data-driven design) ===
+// The available set of stickers is defined by this single array
+const stickerList: string[] = ["☕", "🍪", "🍩"];
 
-// Insert stickers directly under the markers
+// Function that renders all sticker buttons, including the "Add custom sticker" button
+function renderStickers() {
+  const stickersDiv = document.getElementById("stickers");
+  if (!stickersDiv) return;
+
+  // Build sticker buttons dynamically from stickerList
+  stickersDiv.innerHTML = `
+    ${
+    stickerList
+      .map((s) => `<button data-sticker="${s}">${s}</button>`)
+      .join("")
+  }
+    <button id="addSticker" title="Create custom sticker">➕</button>
+  `;
+
+  // Re-bind all sticker button listeners after rendering
+  const stickerButtons = stickersDiv.querySelectorAll<HTMLButtonElement>(
+    "[data-sticker]",
+  );
+
+  stickerButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentSticker = btn.dataset.sticker || null;
+
+      // Update selected styling
+      stickerButtons.forEach((b) => b.classList.remove("selectedTool"));
+      btn.classList.add("selectedTool");
+
+      // 🔹 Deselect thin/thick marker buttons when a sticker is chosen
+      thinBtn?.classList.remove("selectedTool");
+      thickBtn?.classList.remove("selectedTool");
+
+      // Fire tool-moved event to refresh the preview
+      canvas?.dispatchEvent(new Event("tool-moved"));
+    });
+  });
+
+  // Custom sticker creation button ===
+  const addBtn = document.getElementById("addSticker");
+  addBtn?.addEventListener("click", () => {
+    const newSticker = prompt("Enter custom sticker text:", "🧽");
+    if (newSticker && newSticker.trim() !== "") {
+      stickerList.push(newSticker.trim());
+      renderStickers(); // Re-render to include the new sticker
+    }
+  });
+}
+
+// Insert sticker container directly under the markers
 const markersDiv = document.getElementById("markers");
-markersDiv?.insertAdjacentHTML("afterend", stickerButtonsHTML);
+const stickersHTML = `<div id="stickers"></div>`;
+markersDiv?.insertAdjacentHTML("afterend", stickersHTML);
+
+// Initial sticker render
+renderStickers();
 
 let currentLineWidth = 2; // default to "thin"
 let currentSticker: string | null = null;
@@ -37,6 +84,7 @@ let currentSticker: string | null = null;
 // Get canvas and context ===
 const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
 if (canvas) {
+  // ✅ keep your original null checks and explicit sizing
   canvas.width = 256;
   canvas.height = 256;
 }
@@ -107,7 +155,7 @@ function MarkerPreview(
   };
 }
 
-// Sticker preview command
+// Sticker preview command ===
 function StickerPreview(x: number, y: number, sticker: string): DisplayCmd {
   return {
     display(ctx: CanvasRenderingContext2D) {
@@ -121,7 +169,7 @@ function StickerPreview(x: number, y: number, sticker: string): DisplayCmd {
   };
 }
 
-// Sticker placement command
+// Sticker placement command ===
 function StickerCmd(
   x: number,
   y: number,
@@ -181,34 +229,12 @@ thickBtn?.addEventListener("click", () => {
   );
 });
 
-// Sticker button event listeners
-const stickerButtons = document.querySelectorAll<HTMLButtonElement>(
-  "#stickers button",
-);
-
-stickerButtons.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    currentSticker = btn.dataset.sticker || null;
-
-    // Update selected styling
-    stickerButtons.forEach((b) => b.classList.remove("selectedTool"));
-    btn.classList.add("selectedTool");
-
-    // 🔹 Deselect thin/thick marker buttons when a sticker is chosen
-    thinBtn?.classList.remove("selectedTool");
-    thickBtn?.classList.remove("selectedTool");
-
-    // Fire tool-moved event to redraw preview
-    canvas.dispatchEvent(new Event("tool-moved"));
-  });
-});
-
 // Mouse event listeners ===
 // Start drawing / place sticker
 canvas.addEventListener("mousedown", (e) => {
   if (e.button !== 0) return;
 
-  // Sticker placement
+  // Sticker placement ===
   if (currentSticker) {
     const stickerCommand = StickerCmd(e.offsetX, e.offsetY, currentSticker);
     commands.push(stickerCommand);
@@ -218,7 +244,7 @@ canvas.addEventListener("mousedown", (e) => {
     return;
   }
 
-  // Marker drawing
+  // Marker drawing ===
   inputState.isDrawing = true;
   currentCmd = MarkerLine(e.offsetX, e.offsetY, currentLineWidth);
   commands.push(currentCmd);
@@ -227,7 +253,7 @@ canvas.addEventListener("mousedown", (e) => {
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
-// Draw while moving
+// Draw while moving ===
 canvas.addEventListener("mousemove", (e) => {
   if (!inputState.isDrawing) {
     // Sticker preview
@@ -243,20 +269,20 @@ canvas.addEventListener("mousemove", (e) => {
   }
 });
 
-// Hide preview when cursor leaves the canvas
+// Hide preview when cursor leaves the canvas ===
 canvas.addEventListener("mouseleave", () => {
   toolPreview = null;
   canvas.dispatchEvent(new Event("tool-moved"));
 });
 
-// Stop drawing
+// Stop drawing ===
 globalThis.addEventListener("mouseup", () => {
   inputState.isDrawing = false;
   currentCmd = null;
 });
 
 // Button event listeners ===
-// Clear button
+// Clear button ===
 document.getElementById("clear")?.addEventListener("click", () => {
   context.clearRect(0, 0, canvas.width, canvas.height);
   commands.length = 0;
@@ -264,7 +290,7 @@ document.getElementById("clear")?.addEventListener("click", () => {
   canvas.dispatchEvent(new Event("drawing-changed"));
 });
 
-// Undo button
+// Undo button ===
 document.getElementById("undo")?.addEventListener("click", () => {
   if (commands.length > 0) {
     const undone = commands.pop();
@@ -275,7 +301,7 @@ document.getElementById("undo")?.addEventListener("click", () => {
   }
 });
 
-// Redo button
+// Redo button ===
 document.getElementById("redo")?.addEventListener("click", () => {
   if (undoneCmd.length > 0) {
     const redone = undoneCmd.pop();
@@ -287,12 +313,12 @@ document.getElementById("redo")?.addEventListener("click", () => {
 });
 
 // Rendering logic ===
-// Redraw function
+// Redraw function ===
 function redraw(ctx: CanvasRenderingContext2D) {
   if (!canvas) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw all stored commands
+  // Draw all stored commands ===
   for (const cmd of commands) {
     cmd.display(ctx);
   }

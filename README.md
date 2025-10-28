@@ -8,3 +8,4 @@
 6. **Step 6**: Introduced two marker tools (“thin” and “thick”) that lets users choose the line thickness for new strokes with visual feedback indicating the selected tool. Attempted to categorize `main.ts` functions and events with comments.
 7. **Step 7**: Added a live tool preview that follows the cursor when not drawing by creating a preview object with a display method and dispatching a tool-moved event to render it on the canvas.
 8. **Step 8**: Step 8: Implemented multiple sticker tools (☕, 🍪, 🍩) with live previews that can be placed on the canvas using the command pattern, integrated with undo/redo and visual tool selection.
+9. **Step 9**: Refactored the sticker system to use a data-driven design, where all available stickers are defined by a single array. Added a “Create custom sticker” button that uses `prompt()` to let users add new stickers dynamically with the same behaviors as existing stickers.
