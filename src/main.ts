@@ -18,9 +18,16 @@ document.body.innerHTML = `
 </div>
 `;
 
-// === Step 9: Custom stickers (data-driven design) ===
+// Custom stickers (data-driven design) ===
 // The available set of stickers is defined by this single array
 const stickerList: string[] = ["☕", "🍪", "🍩"];
+
+// Helper function to deselect any set of buttons ===
+function deselectAll(selector: string) {
+  document.querySelectorAll(selector).forEach((b) =>
+    b.classList.remove("selectedTool")
+  );
+}
 
 // Function that renders all sticker buttons, including the "Add custom sticker" button
 function renderStickers() {
@@ -50,7 +57,7 @@ function renderStickers() {
       stickerButtons.forEach((b) => b.classList.remove("selectedTool"));
       btn.classList.add("selectedTool");
 
-      // 🔹 Deselect thin/thick marker buttons when a sticker is chosen
+      // Deselect thin/thick marker buttons when a sticker is chosen
       thinBtn?.classList.remove("selectedTool");
       thickBtn?.classList.remove("selectedTool");
 
@@ -84,7 +91,7 @@ let currentSticker: string | null = null;
 // Get canvas and context ===
 const canvas = document.getElementById("canvas") as HTMLCanvasElement | null;
 if (canvas) {
-  // ✅ keep your original null checks and explicit sizing
+  // important for TypeScript: null checks and explicit sizing
   canvas.width = 256;
   canvas.height = 256;
 }
@@ -202,32 +209,28 @@ let toolPreview: DisplayCmd | null = null; // holds the live preview for the too
 // Track cursor state ===
 const inputState = { isDrawing: false };
 
+// Unified tool selection helper ===
+function selectMarker(width: number, btn: HTMLElement, otherBtn: HTMLElement) {
+  currentLineWidth = width;
+  btn.classList.add("selectedTool");
+  otherBtn.classList.remove("selectedTool");
+  currentSticker = null; // deselect sticker
+  deselectAll("#stickers button");
+}
+
 // Tool button event listeners ===
 // thin tool selected by default (2px)
-thinBtn?.addEventListener("click", () => {
-  currentLineWidth = 2;
-  thinBtn.classList.add("selectedTool");
-  thickBtn?.classList.remove("selectedTool");
-  currentSticker = null; // deselect sticker
-
-  // 🔹 Deselect all sticker buttons when switching to marker tool
-  document.querySelectorAll("#stickers button").forEach((b) =>
-    b.classList.remove("selectedTool")
-  );
-});
+thinBtn?.addEventListener("click", () => selectMarker(2, thinBtn, thickBtn!));
 
 // thick tool (6px)
-thickBtn?.addEventListener("click", () => {
-  currentLineWidth = 6;
-  thickBtn.classList.add("selectedTool");
-  thinBtn?.classList.remove("selectedTool");
-  currentSticker = null; // deselect sticker
+thickBtn?.addEventListener("click", () => selectMarker(6, thickBtn, thinBtn!));
 
-  // 🔹 Deselect all sticker buttons when switching to marker tool
-  document.querySelectorAll("#stickers button").forEach((b) =>
-    b.classList.remove("selectedTool")
-  );
-});
+// Unified preview factory ===
+function makePreview(x: number, y: number): DisplayCmd {
+  return currentSticker
+    ? StickerPreview(x, y, currentSticker)
+    : MarkerPreview(x, y, currentLineWidth);
+}
 
 // Mouse event listeners ===
 // Start drawing / place sticker
@@ -256,12 +259,7 @@ canvas.addEventListener("mousedown", (e) => {
 // Draw while moving ===
 canvas.addEventListener("mousemove", (e) => {
   if (!inputState.isDrawing) {
-    // Sticker preview
-    if (currentSticker) {
-      toolPreview = StickerPreview(e.offsetX, e.offsetY, currentSticker);
-    } else {
-      toolPreview = MarkerPreview(e.offsetX, e.offsetY, currentLineWidth);
-    }
+    toolPreview = makePreview(e.offsetX, e.offsetY);
     canvas.dispatchEvent(new Event("tool-moved"));
   } else if (currentCmd) {
     currentCmd.drag(e.offsetX, e.offsetY);
@@ -311,6 +309,42 @@ document.getElementById("redo")?.addEventListener("click", () => {
     }
   }
 });
+
+// High resolution export ===
+// Add an "Export" button below the existing actions
+const actionsDiv = document.getElementById("actions");
+actionsDiv?.insertAdjacentHTML(
+  "beforeend",
+  `<button id="export">Export</button>`,
+);
+
+// High-resolution export function ===
+function exportHighRes() {
+  // Create a temporary high-resolution canvas (4x scale)
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+
+  const exportCtx = exportCanvas.getContext("2d");
+  if (!exportCtx) return;
+
+  // Scale context so that the 256x256 coordinate system maps to 1024x1024
+  exportCtx.scale(4, 4);
+
+  // Redraw all stored commands (no tool preview)
+  for (const cmd of commands) {
+    cmd.display(exportCtx);
+  }
+
+  // Trigger PNG download
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+}
+
+// Export button event listener ===
+document.getElementById("export")?.addEventListener("click", exportHighRes);
 
 // Rendering logic ===
 // Redraw function ===
