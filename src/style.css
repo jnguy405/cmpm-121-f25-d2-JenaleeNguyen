@@ -1,5 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap");
 
+/* Base styles with coffee theme */
+body {
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #d2691e 100%);
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  font-family: "Bubblegum Sans", cursive, sans-serif;
+}
+
 /* Container */
 #container {
   display: flex;
@@ -7,15 +16,22 @@
   justify-content: center;
   align-items: center;
   height: 80vh;
+  background: rgba(139, 69, 19, 0.1);
+  border-radius: 20px;
+  padding: 20px;
+  border: 3px solid #5d4037;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* Title */
 #title {
   font-size: 48px;
-  font-family:
-    "Baloo 2", "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
+  font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
   text-align: center;
-  margin-bottom: 10px; /* Bring title closer to markers */
+  margin-bottom: 10px;
+  color: #fff8e1;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin-top: -50px;
 }
 
 /* Markers Section */
@@ -32,43 +48,99 @@
   margin-bottom: 15px;
 }
 
-/* All buttons share the same style */
+/* All buttons share the same coffee-themed style */
 button {
   padding: 10px 20px;
   font-size: 16px;
   font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
-  border-radius: 5px;
-  background: white;
-  box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #d7ccc8, #bcaaa4);
+  color: #5d4037;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  border: 2px solid black;
-  transition: transform 0.1s ease;
+  border: 2px solid #5d4037;
+  transition: all 0.2s ease;
+  font-weight: bold;
 }
 
 /* Hover effect for all buttons */
 button:hover {
   transform: scale(1.05);
+  background: linear-gradient(to bottom, #efebe9, #d7ccc8);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Active/pressed effect */
+button:active {
+  transform: scale(0.98);
 }
 
 /* Canvas */
 #canvas {
-  border: 1px solid black;
+  border: 3px solid #5d4037;
   display: block;
   margin: 0 auto;
   width: 256px;
   height: 256px;
   border-radius: 40px;
-  box-shadow: 0px 10px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.4);
+  background: white;
 }
 
 /* Bottom Buttons Container */
 #actions {
   margin-top: 20px;
+  display: flex;
+  gap: 10px;
 }
 
 /* Selected tool styling for markers and stickers */
 button.selectedTool {
-  background-color: #222;
-  color: white;
-  border: 2px solid #555;
+  background: linear-gradient(to bottom, #5d4037, #3e2723);
+  color: #fff8e1;
+  border: 2px solid #8d6e63;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Specific styling for the export button to make it stand out */
+#export {
+  background: linear-gradient(to bottom, #8b4513, #5d4037);
+  color: #fff8e1;
+  border: 2px solid #d7ccc8;
+}
+
+#export:hover {
+  background: linear-gradient(to bottom, #a0522d, #8b4513);
+}
+
+/* Sticker buttons special styling */
+#stickers button {
+  font-size: 18px;
+  min-width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #ffe0b2, #ffcc80);
+  border: 2px solid #5d4037;
+}
+
+#stickers button:hover {
+  background: linear-gradient(to bottom, #ffecb3, #ffe082);
+}
+
+#stickers button.selectedTool {
+  background: linear-gradient(to bottom, #5d4037, #3e2723);
+  color: #ffe0b2;
+}
+
+/* Add sticker button special styling */
+#addSticker {
+  background: linear-gradient(to bottom, #a1887f, #8d6e63);
+  color: #fff8e1;
+  border: 2px solid #5d4037;
+}
+
+#addSticker:hover {
+  background: linear-gradient(to bottom, #bcaaa4, #a1887f);
 }

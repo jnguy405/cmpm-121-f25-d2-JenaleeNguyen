@@ -20,7 +20,7 @@ document.body.innerHTML = `
 
 // Custom stickers (data-driven design) ===
 // The available set of stickers is defined by this single array
-const stickerList: string[] = ["☕", "🍪", "🍩"];
+const stickerList: string[] = ["☕", "🍪", "🍩", "🤎"];
 
 // Helper function to deselect any set of buttons ===
 function deselectAll(selector: string) {
@@ -167,7 +167,7 @@ function StickerPreview(x: number, y: number, sticker: string): DisplayCmd {
   return {
     display(ctx: CanvasRenderingContext2D) {
       ctx.save();
-      ctx.font = "32px serif";
+      ctx.font = "20px serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(sticker, x, y);
@@ -190,7 +190,7 @@ function StickerCmd(
 
   function display(ctx: CanvasRenderingContext2D) {
     ctx.save();
-    ctx.font = "32px serif";
+    ctx.font = "20px serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(sticker, pos.x, pos.y);
@@ -223,7 +223,7 @@ function selectMarker(width: number, btn: HTMLElement, otherBtn: HTMLElement) {
 thinBtn?.addEventListener("click", () => selectMarker(2, thinBtn, thickBtn!));
 
 // thick tool (6px)
-thickBtn?.addEventListener("click", () => selectMarker(6, thickBtn, thinBtn!));
+thickBtn?.addEventListener("click", () => selectMarker(12, thickBtn, thinBtn!));
 
 // Unified preview factory ===
 function makePreview(x: number, y: number): DisplayCmd {

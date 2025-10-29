@@ -10,3 +10,4 @@
 8. **Step 8**: Implemented multiple sticker tools (☕, 🍪, 🍩) with live previews that can be placed on the canvas using the command pattern, integrated with undo/redo and visual tool selection.
 9. **Step 9**: Refactored the sticker system to use a data-driven design, where all available stickers are defined by a single array. Added a “Create custom sticker” button that uses `prompt()` to let users add new stickers dynamically with the same behaviors as existing stickers.
 10. **Step 10**: Added a high-resolution `Export` feature that generates a temporary `1024×1024 canvas`, redraws all saved commands at 4× scale, and triggers a `PNG` download of the drawing. This enables users to export crisp, high-quality versions of their creations directly from the app Refactored thin and thick marker tools to use `deselectAll()` and `selectMarker()` to reduce redundancy and bulk.
+11. **Step 11**: Added sticker emoji, changed marker thickness, and made a coffee theme.
