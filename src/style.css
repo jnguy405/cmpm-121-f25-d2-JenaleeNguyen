@@ -4,18 +4,25 @@
 body {
   background: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #d2691e 100%);
   margin: 0;
-  padding: 20px;
+  padding: 0;
   min-height: 100vh;
   font-family: "Bubblegum Sans", cursive, sans-serif;
+}
+
+/* App container for centering */
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 /* Container */
 #container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  height: 80vh;
   background: rgba(139, 69, 19, 0.1);
   border-radius: 20px;
   padding: 20px;
@@ -23,15 +30,125 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
+/* Main content layout - canvas centered, controls to the right */
+#main-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  justify-content: center;
+  width: 100%;
+  position: relative; /* Added for proper centering */
+}
+
+/* Canvas container for centered positioning */
+#canvas-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* This container will be centered */
+}
+
+/* Left panel with canvas and tools */
+#left-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Controls panel positioned to the right - NOT centered */
+#controls-panel {
+  background: rgba(255, 248, 225, 0.9);
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid #5d4037;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  align-self: flex-start;
+  /* Remove any centering properties */
+  margin-left: 0; /* Ensure no auto margins */
+}
+
+.control-group {
+  margin-bottom: 25px;
+}
+
+.control-group h3 {
+  color: #5d4037;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 18px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.slider-container label {
+  color: #5d4037;
+  font-weight: bold;
+}
+
+.slider-container input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #d7ccc8;
+  outline: none;
+}
+
+.slider-container input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #5d4037;
+  cursor: pointer;
+  border: 2px solid #fff8e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.slider-container span {
+  color: #5d4037;
+  font-weight: bold;
+  text-align: center;
+}
+
+.color-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  border: 3px solid #5d4037;
+  margin: 0 auto;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  background: hsl(0, 70%, 50%);
+}
+
+.rotation-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  border: 3px solid #5d4037;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: #ffe0b2;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
 /* Title */
 #title {
   font-size: 48px;
   font-family: "Bubblegum Sans", "Comic Sans MS", cursive, sans-serif;
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 50px;
   color: #fff8e1;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  margin-top: -50px;
 }
 
 /* Markers Section */
@@ -46,6 +163,9 @@ body {
   display: flex;
   gap: 10px;
   margin-bottom: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 256px;
 }
 
 /* All buttons share the same coffee-themed style */
@@ -92,6 +212,8 @@ button:active {
   margin-top: 20px;
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Selected tool styling for markers and stickers */
@@ -143,4 +265,212 @@ button.selectedTool {
 
 #addSticker:hover {
   background: linear-gradient(to bottom, #bcaaa4, #a1887f);
+}
+
+/* ===== MOBILE OPTIMIZATIONS ===== */
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  #app {
+    padding: 10px;
+    align-items: flex-start;
+    min-height: auto;
+  }
+
+  #container {
+    padding: 15px;
+    border-radius: 15px;
+    width: 100%;
+  }
+
+  #title {
+    font-size: 36px;
+    margin-bottom: 15px;
+  }
+
+  #main-content {
+    flex-direction: column;
+    align-items: center; /* Center both on mobile */
+    gap: 20px;
+  }
+
+  /* On mobile, center the controls panel too */
+  #controls-panel {
+    align-self: center;
+  }
+
+  /* Compact menu bars */
+  #markers {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  #stickers {
+    gap: 6px;
+    margin-bottom: 12px;
+    max-width: 280px;
+  }
+
+  /* Smaller buttons on mobile */
+  button {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  /* Even smaller sticker buttons */
+  #stickers button {
+    min-width: 40px;
+    height: 40px;
+    font-size: 16px;
+    padding: 5px;
+  }
+
+  /* Compact action buttons */
+  #actions {
+    margin-top: 15px;
+    gap: 8px;
+  }
+
+  #actions button {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  /* Smaller controls panel on mobile */
+  #controls-panel {
+    width: 100%;
+    max-width: 280px;
+    padding: 15px;
+    margin-top: 0;
+  }
+
+  .control-group {
+    margin-bottom: 20px;
+  }
+
+  .control-group h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* Smaller previews on mobile */
+  .color-preview,
+  .rotation-preview {
+    width: 50px;
+    height: 50px;
+  }
+
+  .rotation-preview {
+    font-size: 20px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  #app {
+    padding: 5px;
+  }
+
+  #container {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  #title {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  /* Even more compact layout */
+  #markers {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  #stickers {
+    gap: 4px;
+    margin-bottom: 10px;
+    max-width: 240px;
+  }
+
+  /* Tiny buttons for very small screens */
+  button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  #stickers button {
+    min-width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+
+  #actions {
+    margin-top: 12px;
+    gap: 6px;
+  }
+
+  #actions button {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  #controls-panel {
+    padding: 12px;
+    max-width: 260px;
+  }
+
+  .slider-container {
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .slider-container label {
+    font-size: 14px;
+  }
+
+  .slider-container span {
+    font-size: 14px;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  #app {
+    padding: 5px;
+  }
+
+  #container {
+    padding: 10px;
+  }
+
+  #main-content {
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  #title {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  #controls-panel {
+    align-self: flex-start; /* Back to right alignment in landscape */
+  }
+
+  /* Even more compact for landscape */
+  #markers,
+  #stickers {
+    margin-bottom: 8px;
+  }
+
+  button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  #stickers button {
+    min-width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
 }
